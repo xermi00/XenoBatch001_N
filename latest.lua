@@ -4500,7 +4500,7 @@ CMDs[#CMDs + 1] = {NAME = '', DESC = ''}
 CMDs[#CMDs + 1] = {NAME = 'reset', DESC = 'Resets your character normally'}
 CMDs[#CMDs + 1] = {NAME = 'respawn', DESC = 'Respawns you'}
 CMDs[#CMDs + 1] = {NAME = 'refresh / re', DESC = 'Respawns and brings you back to the same position'}
-CMDs[#CMDs + 1] = {NAME = 'milhe', DESC = 'Grants a permanent respawn shield'}
+CMDs[#CMDs + 1] = {NAME = 'milhe', DESC = 'Grants true god mode with damage immunity'}
 CMDs[#CMDs + 1] = {NAME = 'invisible / invis', DESC = 'Makes you invisible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'visible / vis', DESC = 'Makes you visible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'toolinvisible / toolinvis / tinvis', DESC = 'Makes you invisible to other players and able to use tools'}
@@ -8959,18 +8959,33 @@ end)
 local function giveShield(Char)
     if not Char then return end
 
-    -- Check if a ForceField already exists
+    -- Check if a ForceField already exists (for visual effect)
     local Shield = Char:FindFirstChildOfClass("ForceField")
     if not Shield then
         Shield = Instance.new("ForceField")
+        Shield.Visible = true -- May only be visible on client
         Shield.Parent = Char
     end
 
-    -- Make sure the shield stays active forever
+    -- Find the Humanoid
+    local Human = Char:FindFirstChildWhichIsA("Humanoid")
+    if not Human then return end
+
+    -- Fully block all damage by preventing health changes
     task.spawn(function()
-        while Char and Shield do
-            Shield.Parent = Char -- Reapply if removed
-            task.wait(0.1) -- Small delay to avoid lag
+        while Char and Human and Human.Parent do
+            -- Lock health at maximum
+            Human.MaxHealth = math.huge -- Infinite health
+            Human.Health = math.huge -- Prevent damage
+
+            -- Disable death mechanics
+            Human:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+            Human:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            Human:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+            Human:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+            -- Small delay to prevent lag
+            task.wait(0.1)
         end
     end)
 end
