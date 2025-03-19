@@ -6715,20 +6715,70 @@ addcmd('exit',{},function(args, speaker)
 	game:shutdown() 
 end)
 
+local RunService = game:GetService("RunService")
 local Noclipping = nil
-addcmd('noclip',{},function(args, speaker)
-	Clip = false
-	wait(0.1)
-	local function NoclipLoop()
-		if Clip == false and speaker.Character ~= nil then
-			for _, child in pairs(speaker.Character:GetDescendants()) do
-				if child:IsA("BasePart") and child.CanCollide == true and child.Name ~= floatName then
-					child.CanCollide = false
-				end
-			end
-		end
-	end
-	Noclipping = RunService.Stepped:Connect(NoclipLoop)
+local Clip = true
+
+local function enableNoclip(speaker)
+    if not speaker.Character then return end
+    Clip = false
+
+    local function NoclipLoop()
+        if not Clip and speaker.Character then
+            for _, child in pairs(speaker.Character:GetDescendants()) do
+                if child:IsA("BasePart") and child.CanCollide == true then
+                    child.CanCollide = false
+                end
+            end
+        end
+    end
+
+    -- Start NoClip loop
+    Noclipping = RunService.Stepped:Connect(NoclipLoop)
+end
+
+local function disableNoclip()
+    if Noclipping then
+        Noclipping:Disconnect()
+    end
+    Clip = true
+end
+
+local function onCharacterAdded(Char, speaker)
+    -- Wait for Humanoid to load
+    local Human = Char:FindFirstChildOfClass("Humanoid")
+    if not Human then
+        Human = Char:WaitForChild("Humanoid", 5)
+    end
+
+    -- Re-enable noclip if it was active before death
+    if not Clip then
+        task.wait(1) -- Small delay to avoid issues
+        enableNoclip(speaker)
+    end
+end
+
+addcmd('noclip', {}, function(_, speaker)
+    enableNoclip(speaker)
+end)
+
+addcmd('clip', {'unnoclip'}, function(_, speaker)
+    disableNoclip()
+end)
+
+addcmd('togglenoclip', {}, function(_, speaker)
+    if Clip then
+        enableNoclip(speaker)
+    else
+        disableNoclip()
+    end
+end)
+
+-- Auto-reapply NoClip after respawn
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(char)
+        onCharacterAdded(char, player)
+    end)
 end)
 
 addcmd('clip',{'unnoclip'},function(args, speaker)
