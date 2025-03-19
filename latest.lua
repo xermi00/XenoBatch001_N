@@ -4500,7 +4500,7 @@ CMDs[#CMDs + 1] = {NAME = '', DESC = ''}
 CMDs[#CMDs + 1] = {NAME = 'reset', DESC = 'Resets your character normally'}
 CMDs[#CMDs + 1] = {NAME = 'respawn', DESC = 'Respawns you'}
 CMDs[#CMDs + 1] = {NAME = 'refresh / re', DESC = 'Respawns and brings you back to the same position'}
-CMDs[#CMDs + 1] = {NAME = 'god', DESC = 'Makes your character difficult to kill in most games'}
+CMDs[#CMDs + 1] = {NAME = 'milhe', DESC = 'Sets your health to 1 million and prevents death'}
 CMDs[#CMDs + 1] = {NAME = 'milhe', DESC = 'Sets your health to 1 million'}
 CMDs[#CMDs + 1] = {NAME = 'invisible / invis', DESC = 'Makes you invisible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'visible / vis', DESC = 'Makes you visible to other players'}
@@ -8957,7 +8957,25 @@ addcmd('god', {"health"}, function(args, speaker)
 
 end)
 
--- New "milhe" command (sets health to 1 million)
+local function makeInvincible(Human)
+    task.spawn(function()
+        while Human and Human.Parent do
+            -- Keep MaxHealth at 1 million
+            Human.MaxHealth = 1e6
+            -- Reset Health to Max
+            Human.Health = Human.MaxHealth
+            -- Prevent any type of humanoid state that might cause death
+            Human:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+            Human:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            Human:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+            Human:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+            -- Small delay to prevent lag
+            task.wait(0.1)
+        end
+    end)
+end
+
 addcmd('milhe', {}, function(_, speaker)
     local Char = speaker.Character
     if not Char then return end
@@ -8965,9 +8983,10 @@ addcmd('milhe', {}, function(_, speaker)
     local Human = Char:FindFirstChildWhichIsA("Humanoid")
     if not Human then return end
 
-    -- Set health to 1 million
+    -- Set health to 1 million and make invincible
     Human.MaxHealth = 1e6
-    Human.Health = Human.MaxHealth
+    Human.Health = 1e6
+    makeInvincible(Human)
 end)
 
 invisRunning = false
