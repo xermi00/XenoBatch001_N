@@ -4500,8 +4500,7 @@ CMDs[#CMDs + 1] = {NAME = '', DESC = ''}
 CMDs[#CMDs + 1] = {NAME = 'reset', DESC = 'Resets your character normally'}
 CMDs[#CMDs + 1] = {NAME = 'respawn', DESC = 'Respawns you'}
 CMDs[#CMDs + 1] = {NAME = 'refresh / re', DESC = 'Respawns and brings you back to the same position'}
-CMDs[#CMDs + 1] = {NAME = 'milhe', DESC = 'Sets your health to 1 million and prevents death'}
-CMDs[#CMDs + 1] = {NAME = 'milhe', DESC = 'Sets your health to 1 million'}
+CMDs[#CMDs + 1] = {NAME = 'milhe', DESC = 'Grants a permanent respawn shield'}
 CMDs[#CMDs + 1] = {NAME = 'invisible / invis', DESC = 'Makes you invisible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'visible / vis', DESC = 'Makes you visible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'toolinvisible / toolinvis / tinvis', DESC = 'Makes you invisible to other players and able to use tools'}
@@ -8957,21 +8956,21 @@ addcmd('god', {"health"}, function(args, speaker)
 
 end)
 
-local function makeInvincible(Human)
-    task.spawn(function()
-        while Human and Human.Parent do
-            -- Keep MaxHealth at 1 million
-            Human.MaxHealth = 1e6
-            -- Reset Health to Max
-            Human.Health = Human.MaxHealth
-            -- Prevent any type of humanoid state that might cause death
-            Human:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+local function giveShield(Char)
+    if not Char then return end
 
-            -- Small delay to prevent lag
-            task.wait(0.1)
+    -- Check if a ForceField already exists
+    local Shield = Char:FindFirstChildOfClass("ForceField")
+    if not Shield then
+        Shield = Instance.new("ForceField")
+        Shield.Parent = Char
+    end
+
+    -- Make sure the shield stays active forever
+    task.spawn(function()
+        while Char and Shield do
+            Shield.Parent = Char -- Reapply if removed
+            task.wait(0.1) -- Small delay to avoid lag
         end
     end)
 end
@@ -8980,13 +8979,7 @@ addcmd('milhe', {}, function(_, speaker)
     local Char = speaker.Character
     if not Char then return end
 
-    local Human = Char:FindFirstChildWhichIsA("Humanoid")
-    if not Human then return end
-
-    -- Set health to 1 million and make invincible
-    Human.MaxHealth = 1e6
-    Human.Health = 1e6
-    makeInvincible(Human)
+    giveShield(Char)
 end)
 
 invisRunning = false
