@@ -2567,7 +2567,6 @@ eventEditor = (function()
 		resizeList()
 	end
 
-
 	local function saveData()
 		local result = {}
 		for i,v in pairs(events) do
@@ -4501,7 +4500,7 @@ CMDs[#CMDs + 1] = {NAME = '', DESC = ''}
 CMDs[#CMDs + 1] = {NAME = 'reset', DESC = 'Resets your character normally'}
 CMDs[#CMDs + 1] = {NAME = 'respawn', DESC = 'Respawns you'}
 CMDs[#CMDs + 1] = {NAME = 'refresh / re', DESC = 'Respawns and brings you back to the same position'}
-CMDs[#CMDs + 1] = {NAME = 'milhe', DESC = 'Grants true god mode with damage immunity'}
+CMDs[#CMDs + 1] = {NAME = 'god', DESC = 'Makes your character difficult to kill in most games'}
 CMDs[#CMDs + 1] = {NAME = 'invisible / invis', DESC = 'Makes you invisible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'visible / vis', DESC = 'Makes you visible to other players'}
 CMDs[#CMDs + 1] = {NAME = 'toolinvisible / toolinvis / tinvis', DESC = 'Makes you invisible to other players and able to use tools'}
@@ -4637,6 +4636,8 @@ CMDs[#CMDs + 1] = {NAME = 'norender', DESC = 'Disable 3d Rendering to decrease t
 CMDs[#CMDs + 1] = {NAME = 'render', DESC = 'Enable 3d Rendering'}
 CMDs[#CMDs + 1] = {NAME = 'use2022materials / 2022materials', DESC = 'Enables 2022 material textures'}
 CMDs[#CMDs + 1] = {NAME = 'unuse2022materials / un2022materials', DESC = 'Disables 2022 material textures'}
+CMDs[#CMDs + 1] = {NAME = 'invincible', DESC = 'Prevents death by restoring health before dying'}
+CMDs[#CMDs + 1] = {NAME = 'regen', DESC = 'Instantly regenerates full health'}
 -- New Dark Networks Commands
 CMDs[#CMDs + 1] = {NAME = 'nolighting / nolight', DESC = 'Disables all lighting in the game'}
 wait()
@@ -4744,51 +4745,6 @@ function refresh(plr)
 		refreshCmd = false
 	end)
 end
-
-local invinciblePlayers = {}
-
-addcmd("invincible", {}, function(args, speaker)
-    local userId = speaker.UserId
-    invinciblePlayers[userId] = not invinciblePlayers[userId]
-    speaker:FindFirstChildWhichIsA("PlayerGui"):SetCore("SendNotification", {
-        Title = "God Mode",
-        Text = invinciblePlayers[userId] and "Invincibility Enabled" or "Invincibility Disabled",
-        Duration = 3
-    })
-end)
-
-addcmd("invi", {}, function(args, speaker)
-    local userId = speaker.UserId
-    invinciblePlayers[userId] = not invinciblePlayers[userId]
-    speaker:FindFirstChildWhichIsA("PlayerGui"):SetCore("SendNotification", {
-        Title = "God Mode",
-        Text = invinciblePlayers[userId] and "Invincibility Enabled" or "Invincibility Disabled",
-        Duration = 3
-    })
-end)
-
-local function onCharacterAdded(character, player)
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-    if not humanoid then return end
-    
-    humanoid.Died:Connect(function()
-        if invinciblePlayers[player.UserId] then
-            task.wait(0.1) -- Small delay to avoid glitches
-            local newCharacter = player.Character or Instance.new("Model")
-            local newHumanoid = Instance.new("Humanoid")
-            newHumanoid.Parent = newCharacter
-            player.Character = newCharacter
-            newHumanoid.Health = newHumanoid.MaxHealth
-        end
-    end)
-end
-
-game.Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        onCharacterAdded(character, player)
-    end)
-end)
-
 
 local lastDeath
 
@@ -6761,77 +6717,20 @@ addcmd('exit',{},function(args, speaker)
 	game:shutdown() 
 end)
 
-local RunService = game:GetService("RunService")
 local Noclipping = nil
-local Clip = true
-
-local function enableNoclip(speaker)
-    if not speaker.Character then return end
-    Clip = false
-
-    local function NoclipLoop()
-        if not Clip and speaker.Character then
-            for _, child in pairs(speaker.Character:GetDescendants()) do
-                if child:IsA("BasePart") and child.CanCollide then
-                    child.CanCollide = false
-                end
-            end
-        end
-    end
-
-    -- Start NoClip loop
-    Noclipping = RunService.Stepped:Connect(NoclipLoop)
-end
-
-local function disableNoclip()
-    if Noclipping then
-        Noclipping:Disconnect()
-        Noclipping = nil
-    end
-    Clip = true
-end
-
-local function onCharacterAdded(Char, speaker)
-    local Human = Char:FindFirstChildOfClass("Humanoid")
-    if not Human then
-        Human = Char:WaitForChild("Humanoid", 5)
-    end
-
-    -- Re-enable noclip if it was active before death
-    if not Clip then
-        task.wait(1) -- Small delay to avoid issues
-        enableNoclip(speaker)
-    end
-end
-
-addcmd('noclip', {}, function(_, speaker)
-    enableNoclip(speaker)
-end)
-
-addcmd('clip', {'unnoclip'}, function(_, speaker)
-    disableNoclip()
-end)
-
-addcmd('togglenoclip', {}, function(_, speaker)
-    if Clip then
-        enableNoclip(speaker)
-    else
-        disableNoclip()
-    end
-end)
-
--- Auto-reapply NoClip after respawn
-game.Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
-        onCharacterAdded(char, player)
-    end)
-end)
-
--- Auto-reapply NoClip after respawn
-game.Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
-        onCharacterAdded(char, player)
-    end)
+addcmd('noclip',{},function(args, speaker)
+	Clip = false
+	wait(0.1)
+	local function NoclipLoop()
+		if Clip == false and speaker.Character ~= nil then
+			for _, child in pairs(speaker.Character:GetDescendants()) do
+				if child:IsA("BasePart") and child.CanCollide == true and child.Name ~= floatName then
+					child.CanCollide = false
+				end
+			end
+		end
+	end
+	Noclipping = RunService.Stepped:Connect(NoclipLoop)
 end)
 
 addcmd('clip',{'unnoclip'},function(args, speaker)
@@ -9016,88 +8915,50 @@ addcmd('refresh',{'re'},function(args, speaker)
 	refresh(speaker)
 end)
 
-addcmd('god', {"health"}, function(args, speaker)
-    local Cam = workspace.CurrentCamera
-    local Char = speaker.Character
-    if not Char then return end
-
-    local Human = Char:FindFirstChildWhichIsA("Humanoid")
-    if not Human then return end
-
-    -- Clone the Humanoid
-    local nHuman = Human:Clone()
-    nHuman.Parent = Char
-
-    -- Disable death and falling mechanics
-    nHuman:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-    nHuman:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-    nHuman:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-
-    -- Destroy the old Humanoid
-    Human:Destroy()
-
-    -- Assign new Humanoid and update camera
-    speaker.Character = Char
-    Cam.CameraSubject = nHuman
-    Cam.CFrame = Cam.CFrame
-
-    -- Hide the display name
-    nHuman.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-
-    -- Refresh animations if needed
-    local Script = Char:FindFirstChild("Animate")
-    if Script then
-        Script.Disabled = true
-        task.wait()
-        Script.Disabled = false
-    end
-
-    -- Set MaxHealth based on command input (or default to 1,000,000)
-    local newHealth = tonumber(args[1]) or 1e6
-    nHuman.MaxHealth = newHealth
-    nHuman.Health = nHuman.MaxHealth
-
+addcmd('god',{},function(args, speaker)
+	local Cam = workspace.CurrentCamera
+	local Pos, Char = Cam.CFrame, speaker.Character
+	local Human = Char and Char.FindFirstChildWhichIsA(Char, "Humanoid")
+	local nHuman = Human.Clone(Human)
+	nHuman.Parent, speaker.Character = Char, nil
+	nHuman.SetStateEnabled(nHuman, 15, false)
+	nHuman.SetStateEnabled(nHuman, 1, false)
+	nHuman.SetStateEnabled(nHuman, 0, false)
+	nHuman.BreakJointsOnDeath, Human = true, Human.Destroy(Human)
+	speaker.Character, Cam.CameraSubject, Cam.CFrame = Char, nHuman, wait() and Pos
+	nHuman.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	local Script = Char.FindFirstChild(Char, "Animate")
+	if Script then
+		Script.Disabled = true
+		wait()
+		Script.Disabled = false
+	end
+	nHuman.Health = nHuman.MaxHealth
 end)
 
-local function giveShield(Char)
-    if not Char then return end
-
-    -- Check if a ForceField already exists (for visual effect)
-    local Shield = Char:FindFirstChildOfClass("ForceField")
-    if not Shield then
-        Shield = Instance.new("ForceField")
-        Shield.Visible = true -- May only be visible on client
-        Shield.Parent = Char
-    end
-
-    -- Find the Humanoid
-    local Human = Char:FindFirstChildWhichIsA("Humanoid")
-    if not Human then return end
-
-    -- Fully block all damage by preventing health changes
-    task.spawn(function()
-        while Char and Human and Human.Parent do
-            -- Lock health at maximum
-            Human.MaxHealth = math.huge -- Infinite health
-            Human.Health = math.huge -- Prevent damage
-
-            -- Disable death mechanics
-            Human:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-
-            -- Small delay to prevent lag
-            task.wait(0.1)
-        end
-    end)
-end
-
-addcmd('milhe', {}, function(_, speaker)
+-- Invincible Command
+addcmd('invincible', {'invi'}, function(args, speaker)
     local Char = speaker.Character
-    if not Char then return end
+    local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
 
-    giveShield(Char)
+    if Human then
+        -- Connects to the Humanoid's health change event
+        Human:GetPropertyChangedSignal("Health"):Connect(function()
+            if Human.Health <= 0 then
+                Human.Health = Human.MaxHealth -- Restore full health before death
+            end
+        end)
+    end
+end)
+
+-- Regen Command
+addcmd('regen', {}, function(args, speaker)
+    local Char = speaker.Character
+    local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
+
+    if Human then
+        Human.Health = Human.MaxHealth -- Instantly restores full health
+    end
 end)
 
 invisRunning = false
