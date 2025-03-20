@@ -2567,49 +2567,6 @@ eventEditor = (function()
 		resizeList()
 	end
 
-		local invinciblePlayers = {}
-
-addcmd("invincible", {}, function(args, speaker)
-    local userId = speaker.UserId
-    invinciblePlayers[userId] = not invinciblePlayers[userId]
-    speaker:FindFirstChildWhichIsA("PlayerGui"):SetCore("SendNotification", {
-        Title = "God Mode",
-        Text = invinciblePlayers[userId] and "Invincibility Enabled" or "Invincibility Disabled",
-        Duration = 3
-    })
-end)
-
-addcmd("invi", {}, function(args, speaker)
-    local userId = speaker.UserId
-    invinciblePlayers[userId] = not invinciblePlayers[userId]
-    speaker:FindFirstChildWhichIsA("PlayerGui"):SetCore("SendNotification", {
-        Title = "God Mode",
-        Text = invinciblePlayers[userId] and "Invincibility Enabled" or "Invincibility Disabled",
-        Duration = 3
-    })
-end)
-
-local function onCharacterAdded(character, player)
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-    if not humanoid then return end
-    
-    humanoid.Died:Connect(function()
-        if invinciblePlayers[player.UserId] then
-            task.wait(0.1) -- Small delay to avoid glitches
-            local newCharacter = player.Character or Instance.new("Model")
-            local newHumanoid = Instance.new("Humanoid")
-            newHumanoid.Parent = newCharacter
-            player.Character = newCharacter
-            newHumanoid.Health = newHumanoid.MaxHealth
-        end
-    end)
-end
-
-game.Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        onCharacterAdded(character, player)
-    end)
-end)
 
 	local function saveData()
 		local result = {}
@@ -4787,6 +4744,51 @@ function refresh(plr)
 		refreshCmd = false
 	end)
 end
+
+local invinciblePlayers = {}
+
+addcmd("invincible", {}, function(args, speaker)
+    local userId = speaker.UserId
+    invinciblePlayers[userId] = not invinciblePlayers[userId]
+    speaker:FindFirstChildWhichIsA("PlayerGui"):SetCore("SendNotification", {
+        Title = "God Mode",
+        Text = invinciblePlayers[userId] and "Invincibility Enabled" or "Invincibility Disabled",
+        Duration = 3
+    })
+end)
+
+addcmd("invi", {}, function(args, speaker)
+    local userId = speaker.UserId
+    invinciblePlayers[userId] = not invinciblePlayers[userId]
+    speaker:FindFirstChildWhichIsA("PlayerGui"):SetCore("SendNotification", {
+        Title = "God Mode",
+        Text = invinciblePlayers[userId] and "Invincibility Enabled" or "Invincibility Disabled",
+        Duration = 3
+    })
+end)
+
+local function onCharacterAdded(character, player)
+    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+    if not humanoid then return end
+    
+    humanoid.Died:Connect(function()
+        if invinciblePlayers[player.UserId] then
+            task.wait(0.1) -- Small delay to avoid glitches
+            local newCharacter = player.Character or Instance.new("Model")
+            local newHumanoid = Instance.new("Humanoid")
+            newHumanoid.Parent = newCharacter
+            player.Character = newCharacter
+            newHumanoid.Health = newHumanoid.MaxHealth
+        end
+    end)
+end
+
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        onCharacterAdded(character, player)
+    end)
+end)
+
 
 local lastDeath
 
