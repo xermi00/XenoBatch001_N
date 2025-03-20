@@ -4636,7 +4636,7 @@ CMDs[#CMDs + 1] = {NAME = 'norender', DESC = 'Disable 3d Rendering to decrease t
 CMDs[#CMDs + 1] = {NAME = 'render', DESC = 'Enable 3d Rendering'}
 CMDs[#CMDs + 1] = {NAME = 'use2022materials / 2022materials', DESC = 'Enables 2022 material textures'}
 CMDs[#CMDs + 1] = {NAME = 'unuse2022materials / un2022materials', DESC = 'Disables 2022 material textures'}
-CMDs[#CMDs + 1] = {NAME = 'invincible', DESC = 'Prevents death by instantly restoring health 003'}
+CMDs[#CMDs + 1] = {NAME = 'invincible', DESC = 'Prevents death by instantly restoring health 004'}
 CMDs[#CMDs + 1] = {NAME = 'uninvincible', DESC = 'Removes invincibility and allows normal death'}
 CMDs[#CMDs + 1] = {NAME = 'regen', DESC = 'Instantly regenerates full health'}
 -- New Dark Networks Commands
