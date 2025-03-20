@@ -8937,36 +8937,43 @@ addcmd('god',{},function(args, speaker)
 	nHuman.Health = nHuman.MaxHealth
 end)
 
-local InvinciblePlayers = {} -- Stores active invincibility players
+local InvinciblePlayers = {} -- Track invincible players
 
--- Function to apply invincibility
-local function applyInvincibility(speaker)
+-- Function to enable invincibility
+local function enableInvincibility(speaker)
     local Char = speaker.Character
     local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
 
     if Human and not InvinciblePlayers[speaker] then
-        InvinciblePlayers[speaker] = Human
+        InvinciblePlayers[speaker] = true
 
-        -- Prevents death by detecting "Dead" state and restoring health instantly
-        Human.StateChanged:Connect(function(old, new)
-            if new == Enum.HumanoidStateType.Dead then
-                Human.Health = Human.MaxHealth
-                task.wait(0.05) -- Small delay to ensure proper restoration
+        -- Monitor health continuously
+        task.spawn(function()
+            while InvinciblePlayers[speaker] and Human and Human.Parent do
+                if Human.Health <= 1 then
+                    Human.Health = Human.MaxHealth -- Restore full health before death
+                end
+                task.wait(0.05) -- Faster checks (every 0.05s)
             end
         end)
     end
 end
 
+-- Function to disable invincibility
+local function disableInvincibility(speaker)
+    if InvinciblePlayers[speaker] then
+        InvinciblePlayers[speaker] = nil -- Stop tracking
+    end
+end
+
 -- Invincible Command
 addcmd('invincible', {'invi'}, function(args, speaker)
-    applyInvincibility(speaker)
+    enableInvincibility(speaker)
 end)
 
 -- Uninvincible Command
 addcmd('uninvincible', {}, function(args, speaker)
-    if InvinciblePlayers[speaker] then
-        InvinciblePlayers[speaker] = nil -- Remove from tracking
-    end
+    disableInvincibility(speaker)
 end)
 
 -- Regen Command
@@ -8978,7 +8985,6 @@ addcmd('regen', {}, function(args, speaker)
         Human.Health = Human.MaxHealth -- Instantly restores full health
     end
 end)
-
 
 invisRunning = false
 addcmd('invisible',{'invis'},function(args, speaker)
