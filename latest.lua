@@ -4636,7 +4636,7 @@ CMDs[#CMDs + 1] = {NAME = 'norender', DESC = 'Disable 3d Rendering to decrease t
 CMDs[#CMDs + 1] = {NAME = 'render', DESC = 'Enable 3d Rendering'}
 CMDs[#CMDs + 1] = {NAME = 'use2022materials / 2022materials', DESC = 'Enables 2022 material textures'}
 CMDs[#CMDs + 1] = {NAME = 'unuse2022materials / un2022materials', DESC = 'Disables 2022 material textures'}
-CMDs[#CMDs + 1] = {NAME = 'invincible', DESC = 'Prevents death by instantly restoring health 004'}
+CMDs[#CMDs + 1] = {NAME = 'invincible', DESC = 'Prevents death by instantly restoring health 005'}
 CMDs[#CMDs + 1] = {NAME = 'uninvincible', DESC = 'Removes invincibility and allows normal death'}
 CMDs[#CMDs + 1] = {NAME = 'regen', DESC = 'Instantly regenerates full health'}
 -- New Dark Networks Commands
@@ -6719,34 +6719,61 @@ addcmd('exit',{},function(args, speaker)
 end)
 
 local Noclipping = nil
-addcmd('noclip',{},function(args, speaker)
-	Clip = false
-	wait(0.1)
-	local function NoclipLoop()
-		if Clip == false and speaker.Character ~= nil then
-			for _, child in pairs(speaker.Character:GetDescendants()) do
-				if child:IsA("BasePart") and child.CanCollide == true and child.Name ~= floatName then
-					child.CanCollide = false
-				end
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Clip = true -- Default to clipping
+
+local function NoclipLoop(speaker)
+	if Clip == false and speaker.Character then
+		for _, child in pairs(speaker.Character:GetDescendants()) do
+			if child:IsA("BasePart") and child.CanCollide == true then
+				child.CanCollide = false
 			end
 		end
 	end
-	Noclipping = RunService.Stepped:Connect(NoclipLoop)
-end)
+end
 
-addcmd('clip',{'unnoclip'},function(args, speaker)
+local function EnableNoclip(speaker)
+	Clip = false
+	if Noclipping then
+		Noclipping:Disconnect()
+	end
+	Noclipping = RunService.Stepped:Connect(function()
+		NoclipLoop(speaker)
+	end)
+end
+
+local function DisableNoclip()
 	if Noclipping then
 		Noclipping:Disconnect()
 	end
 	Clip = true
+end
+
+addcmd('noclip', {}, function(args, speaker)
+	EnableNoclip(speaker)
 end)
 
-addcmd('togglenoclip',{},function(args, speaker)
+addcmd('clip', {'unnoclip'}, function(args, speaker)
+	DisableNoclip()
+end)
+
+addcmd('togglenoclip', {}, function(args, speaker)
 	if Clip then
-		execCmd('noclip')
+		EnableNoclip(speaker)
 	else
-		execCmd('clip')
+		DisableNoclip()
 	end
+end)
+
+-- Keep noclip after death if it was enabled
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+		wait(0.5) -- Small delay to ensure character loads properly
+		if not Clip then
+			EnableNoclip(player)
+		end
+	end)
 end)
 
 FLYING = false
