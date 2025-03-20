@@ -6726,7 +6726,7 @@ local function enableNoclip(speaker)
     local function NoclipLoop()
         if not Clip and speaker.Character then
             for _, child in pairs(speaker.Character:GetDescendants()) do
-                if child:IsA("BasePart") and child.CanCollide == true then
+                if child:IsA("BasePart") and child.CanCollide then
                     child.CanCollide = false
                 end
             end
@@ -6740,12 +6740,12 @@ end
 local function disableNoclip()
     if Noclipping then
         Noclipping:Disconnect()
+        Noclipping = nil
     end
     Clip = true
 end
 
 local function onCharacterAdded(Char, speaker)
-    -- Wait for Humanoid to load
     local Human = Char:FindFirstChildOfClass("Humanoid")
     if not Human then
         Human = Char:WaitForChild("Humanoid", 5)
@@ -6772,6 +6772,13 @@ addcmd('togglenoclip', {}, function(_, speaker)
     else
         disableNoclip()
     end
+end)
+
+-- Auto-reapply NoClip after respawn
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(char)
+        onCharacterAdded(char, player)
+    end)
 end)
 
 -- Auto-reapply NoClip after respawn
