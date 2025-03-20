@@ -4636,7 +4636,7 @@ CMDs[#CMDs + 1] = {NAME = 'norender', DESC = 'Disable 3d Rendering to decrease t
 CMDs[#CMDs + 1] = {NAME = 'render', DESC = 'Enable 3d Rendering'}
 CMDs[#CMDs + 1] = {NAME = 'use2022materials / 2022materials', DESC = 'Enables 2022 material textures'}
 CMDs[#CMDs + 1] = {NAME = 'unuse2022materials / un2022materials', DESC = 'Disables 2022 material textures'}
-CMDs[#CMDs + 1] = {NAME = 'invincible', DESC = 'Prevents death by instantly restoring health 002'}
+CMDs[#CMDs + 1] = {NAME = 'invincible', DESC = 'Prevents death by instantly restoring health 003'}
 CMDs[#CMDs + 1] = {NAME = 'uninvincible', DESC = 'Removes invincibility and allows normal death'}
 CMDs[#CMDs + 1] = {NAME = 'regen', DESC = 'Instantly regenerates full health'}
 -- New Dark Networks Commands
@@ -8937,33 +8937,35 @@ addcmd('god',{},function(args, speaker)
 	nHuman.Health = nHuman.MaxHealth
 end)
 
+local InvinciblePlayers = {} -- Stores active invincibility players
 
-local InvinciblePlayers = {} -- Keeps track of players with invincibility enabled
-
--- Invincible Command
-addcmd('invincible', {'invi'}, function(args, speaker)
+-- Function to apply invincibility
+local function applyInvincibility(speaker)
     local Char = speaker.Character
     local Human = Char and Char:FindFirstChildWhichIsA("Humanoid")
 
     if Human and not InvinciblePlayers[speaker] then
-        InvinciblePlayers[speaker] = Human -- Store the player's humanoid for tracking
+        InvinciblePlayers[speaker] = Human
 
-        -- Continuous monitoring of player's health
-        task.spawn(function()
-            while InvinciblePlayers[speaker] and Human and Human.Parent do
-                if Human.Health <= 5 then -- If the player is about to die, restore full health
-                    Human.Health = Human.MaxHealth
-                end
-                task.wait(0.1) -- Runs every 0.1 seconds
+        -- Prevents death by detecting "Dead" state and restoring health instantly
+        Human.StateChanged:Connect(function(old, new)
+            if new == Enum.HumanoidStateType.Dead then
+                Human.Health = Human.MaxHealth
+                task.wait(0.05) -- Small delay to ensure proper restoration
             end
         end)
     end
+end
+
+-- Invincible Command
+addcmd('invincible', {'invi'}, function(args, speaker)
+    applyInvincibility(speaker)
 end)
 
 -- Uninvincible Command
 addcmd('uninvincible', {}, function(args, speaker)
     if InvinciblePlayers[speaker] then
-        InvinciblePlayers[speaker] = nil -- Remove the player from tracking
+        InvinciblePlayers[speaker] = nil -- Remove from tracking
     end
 end)
 
@@ -8976,6 +8978,7 @@ addcmd('regen', {}, function(args, speaker)
         Human.Health = Human.MaxHealth -- Instantly restores full health
     end
 end)
+
 
 invisRunning = false
 addcmd('invisible',{'invis'},function(args, speaker)
