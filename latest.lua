@@ -3691,39 +3691,6 @@ ColorsButton.MouseButton1Click:Connect(function()
 	end
 end)
 
-local function preventDeath(speaker)
-    if not speaker.Character then return end
-    local Char = speaker.Character
-    local Human = Char:FindFirstChildOfClass("Humanoid")
-
-    if not Human then return end
-
-    -- Block all health changes & prevent death
-    task.spawn(function()
-        while Char and Human and Human.Parent do
-            Human.MaxHealth = math.huge -- Infinite health
-            Human.Health = math.huge -- Lock health at max
-
-            -- Disable death state changes
-            Human:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-
-            -- Auto-revive if somehow killed
-            if Human.Health <= 0 then
-                task.wait(0.1) -- Small delay
-                Human.Health = math.huge -- Revive instantly
-            end
-            
-            task.wait(0.1) -- Prevent lag
-        end
-    end)
-end
-
-addcmd('antiban', {}, function(_, speaker)
-    preventDeath(speaker)
-end)
-
 
 SettingsButton.MouseButton1Click:Connect(function()
 	if SettingsOpen == false then SettingsOpen = true
