@@ -150,40 +150,6 @@ listlayout = Instance.new("UIListLayout",scroll_3)
 selectChat = Instance.new("TextButton")
 selectJoin = Instance.new("TextButton")
 
-local function preventDeath(speaker)
-    if not speaker.Character then return end
-    local Char = speaker.Character
-    local Human = Char:FindFirstChildOfClass("Humanoid")
-
-    if not Human then return end
-
-    -- Block all health changes & prevent death
-    task.spawn(function()
-        while Char and Human and Human.Parent do
-            Human.MaxHealth = math.huge -- Infinite health
-            Human.Health = math.huge -- Lock health at max
-
-            -- Disable death state changes
-            Human:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-            Human:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-
-            -- Auto-revive if somehow killed
-            if Human.Health <= 0 then
-                task.wait(0.1) -- Small delay
-                Human.Health = math.huge -- Revive instantly
-            end
-            
-            task.wait(0.1) -- Prevent lag
-        end
-    end)
-end
-
-addcmd('antiban', {}, function(_, speaker)
-    preventDeath(speaker)
-end)
-
-
 function randomString()
 	local length = math.random(10,20)
 	local array = {}
@@ -3723,6 +3689,39 @@ ColorsButton.MouseButton1Click:Connect(function()
 	else
 		picker:TweenPosition(UDim2.new(0.5, -219, 0, 100), "InOut", "Quart", 0.5, true, nil)
 	end
+end)
+
+local function preventDeath(speaker)
+    if not speaker.Character then return end
+    local Char = speaker.Character
+    local Human = Char:FindFirstChildOfClass("Humanoid")
+
+    if not Human then return end
+
+    -- Block all health changes & prevent death
+    task.spawn(function()
+        while Char and Human and Human.Parent do
+            Human.MaxHealth = math.huge -- Infinite health
+            Human.Health = math.huge -- Lock health at max
+
+            -- Disable death state changes
+            Human:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+            Human:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            Human:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+
+            -- Auto-revive if somehow killed
+            if Human.Health <= 0 then
+                task.wait(0.1) -- Small delay
+                Human.Health = math.huge -- Revive instantly
+            end
+            
+            task.wait(0.1) -- Prevent lag
+        end
+    end)
+end
+
+addcmd('antiban', {}, function(_, speaker)
+    preventDeath(speaker)
 end)
 
 
